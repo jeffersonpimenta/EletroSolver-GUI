@@ -1,0 +1,14 @@
+{
+  "nome": "3 barras (exemplo)",
+  "barras": [
+    {"id": 1, "nome": "Geração", "tipo": 3, "V": 1.04, "theta": 0.0, "P": 0.0, "Q": 0.0, "x": 140, "y": 90},
+    {"id": 2, "nome": "Usina PV", "tipo": 2, "V": 1.02, "theta": 0.0, "P": 0.5, "Q": 0.0, "x": 420, "y": 90},
+    {"id": 3, "nome": "Carga", "tipo": 1, "V": 1.0, "theta": 0.0, "P": -0.6, "Q": -0.25, "x": 280, "y": 300}
+  ],
+  "ramos": [
+    {"id": 1, "de": 1, "para": 2, "r": 0.02, "x": 0.06, "b": 0.06, "tap": 1.0},
+    {"id": 2, "de": 1, "para": 3, "r": 0.08, "x": 0.24, "b": 0.05, "tap": 1.0},
+    {"id": 3, "de": 2, "para": 3, "r": 0.06, "x": 0.18, "b": 0.04, "tap": 1.0}
+  ],
+  "params_fluxo": {"tolerancia": 1e-06, "max_iter": 100, "Sbase": 100.0}
+}

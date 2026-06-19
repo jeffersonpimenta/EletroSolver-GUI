@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eletrosolver-gui"
+version = "0.1.0"
+description = "Interface web (NiceGUI) para o EletroSolver — fluxo de potência e curto-circuito sobre um diagrama unifilar."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+authors = [{ name = "EletroSolver-GUI" }]
+dependencies = [
+    "nicegui>=2",
+    "plotly>=5",
+    "numpy>=1.20",
+    # Núcleo de cálculo. Canonicamente vem do repositório separado:
+    #   "eletrosolver @ git+https://github.com/jeffersonpimenta/EletroSolver.git"
+    # Para o repositório rodar sem clonar o núcleo, os módulos EletroSolver.py
+    # e Faltas.py estão versionados na raiz (ver README §Núcleo).
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[project.scripts]
+eletrosolver-gui = "gui.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gui"]
+# Empacota também os módulos de topo vendorizados do núcleo.
+only-include = ["gui", "EletroSolver.py", "Faltas.py"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
