@@ -10,16 +10,27 @@ def test_round_trip_serial():
     assert q.params_fluxo["Sbase"] == p.params_fluxo["Sbase"]
 
 
+def test_round_trip_campos_curto():
+    p = Projeto.exemplo()  # caso d3 traz kv/xd/xd0 e ligacao/r0/x0/b0
+    q = Projeto.from_dict(p.to_dict())
+    fonte = next(b for b in q.barras if b["tipo"] in (2, 3))
+    assert {"kv", "xd", "xd0"} <= set(fonte)
+    assert all({"ligacao", "r0", "x0", "b0"} <= set(r) for r in q.ramos)
+
+
 def test_resultado_nao_persiste():
     p = Projeto.exemplo()
     p.resultado_fluxo = {"convergiu": True}
-    assert "resultado_fluxo" not in p.to_dict()
+    p.resultado_curto = {"Ipu": 1.0}
+    d = p.to_dict()
+    assert "resultado_fluxo" not in d
+    assert "resultado_curto" not in d
 
 
-def test_estado_itens_e_progresso():
+def test_estado_itens_cinco():
     p = Projeto.vazio()
     itens = p.estado_itens()
-    assert {it["chave"] for it in itens} == {"barras", "ramos", "slack", "fluxo"}
+    assert {it["chave"] for it in itens} == {"barras", "ramos", "valido", "fluxo", "curto"}
     assert p.progresso() == 0.0
     p = Projeto.exemplo()
     assert p.progresso() > 0.0
@@ -28,8 +39,9 @@ def test_estado_itens_e_progresso():
 def test_definir_sistema_reseta_resultado():
     p = Projeto.exemplo()
     p.resultado_fluxo = {"x": 1}
+    p.resultado_curto = {"y": 2}
     p.definir_sistema([], [], nome="vazio")
-    assert p.resultado_fluxo is None
+    assert p.resultado_fluxo is None and p.resultado_curto is None
 
 
 def test_params_padrao_default():

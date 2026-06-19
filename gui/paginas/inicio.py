@@ -88,7 +88,7 @@ def render(ws) -> None:
                             'margin-bottom:6px">Importar <span style="font-family:'
                             "'IBM Plex Mono',monospace\">projeto.json</span></div>")
                     ui.upload(on_upload=lambda e: _importar(ws, e), auto_upload=True,
-                              max_files=1).props("accept=.json flat dense").style("width:100%")
+                              max_files=1).props("accept=.json flat").classes("es-upload")
 
         ui.html('<div style="font-size:11.5px;font-weight:600;letter-spacing:1.3px;color:#8a909c;'
                 'margin-bottom:14px">UM DIAGRAMA, TRÊS MODOS</div>')

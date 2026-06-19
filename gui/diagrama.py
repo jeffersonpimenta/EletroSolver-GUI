@@ -257,7 +257,7 @@ def render_canvas(barras, ramos, *, modo="editar", resultado=None, curto=None,
         if editable:
             linhas.append(f'<line data-rid="{r["id"]}" x1="{ax:.0f}" y1="{ay:.0f}" '
                           f'x2="{bx:.0f}" y2="{by:.0f}" stroke="transparent" '
-                          f'stroke-width="14" style="cursor:pointer"/>')
+                          f'stroke-width="14" style="cursor:pointer;pointer-events:stroke"/>')
         mx, my = (ax + bx) / 2, (ay + by) / 2
         lig = r.get("ligacao", "linha")
         eh_trafo = bool(lig and lig != "linha")
@@ -349,5 +349,5 @@ def render_canvas(barras, ramos, *, modo="editar", resultado=None, curto=None,
             f'{sub}</div>')
 
     return (f'<div id="es-canvas" style="position:relative;width:{W}px;height:{H}px">'
-            f'<svg width="{W}" height="{H}" style="position:absolute;inset:0;overflow:visible">'
-            f'{"".join(linhas)}</svg>{"".join(nos)}</div>')
+            f'<svg width="{W}" height="{H}" style="position:absolute;inset:0;overflow:visible;'
+            f'pointer-events:none">{"".join(linhas)}</svg>{"".join(nos)}</div>')

@@ -41,6 +41,16 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# Camada de UI: monta HTML/SVG/JS inline (sistema visual es-* portado do modelo).
+# Linhas de string longas são inerentes e mais legíveis sem quebra. A camada pura
+# (estado/casos/diagrama/solver/campos) mantém o limite de 100 colunas.
+"gui/layout.py" = ["E501"]
+"gui/componentes.py" = ["E501"]
+"gui/graficos.py" = ["E501"]
+"gui/workspace.py" = ["E501"]
+"gui/paginas/*.py" = ["E501"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

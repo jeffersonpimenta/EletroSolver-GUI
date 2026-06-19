@@ -65,7 +65,6 @@ _NAV = [
     ("curto", "Curto-circuito", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
      "FASE 3", "analise", "nav_curto"),
 ]
-_GRUPOS = {"espaco": "ESPAÇO DE TRABALHO", "analise": "ANÁLISE SOBRE O DIAGRAMA"}
 
 
 def tema() -> None:
@@ -88,6 +87,9 @@ def tema() -> None:
         ".es-nav:hover{background:rgba(255,255,255,.05)!important}"
         ".es-cardhover{transition:transform .15s,box-shadow .15s}"
         ".es-cardhover:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,24,40,.08)}"
+        ".es-upload{width:100%;box-shadow:none!important;background:transparent;border:none}"
+        ".es-upload .q-uploader__header{display:none}"
+        ".es-upload .q-uploader__list{padding:0;min-height:0}"
         "@keyframes esFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}"
         "</style>"
     )
