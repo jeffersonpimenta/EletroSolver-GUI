@@ -151,7 +151,12 @@ def selecao(label: str | None, valor, opcoes: dict, on_change):
     if label:
         rotulo(label)
     el = ui.select(opcoes, value=valor, on_change=lambda e: on_change(e.value))
-    el.props("outlined dense hide-bottom-space emit-value map-options")
+    # NiceGUI ≥3 já modela as opções de dict como objetos {value,label} e emite o
+    # objeto no change (Select._event_args_to_value traduz índice→chave). NÃO
+    # adicionar 'emit-value'/'map-options' (idioma do NiceGUI 2): faria o Quasar
+    # emitir um escalar e a troca não comitaria (dropdown reverte). Ver
+    # tests/test_componentes_select.py.
+    el.props("outlined dense hide-bottom-space")
     el.style(f"{INP};margin-bottom:12px").classes("es-campo")
     return el
 

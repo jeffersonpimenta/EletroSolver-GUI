@@ -11,7 +11,6 @@ controlador JS único trata arraste/clique, devolvendo eventos ``es_*`` ao Pytho
 """
 from __future__ import annotations
 
-import asyncio
 import json
 
 from nicegui import run, ui
@@ -288,18 +287,11 @@ class Workspace:
     def set_b0(self, v):
         self._edit_ramo(b0=para_float(v))
 
-    async def set_ligacao(self, v) -> None:
+    def set_ligacao(self, v) -> None:
         self.proj.ramos = diagrama.atualizar_ramo(self.proj.ramos, self.sel_id, ligacao=v)
         self._limpar_resultados()
         self._persistir()
-        # canvas/sob/etc. atualizam já — o símbolo de trafo aparece na hora. Já
-        # painel_topo contém o próprio ``ui.select``: reconstruí-lo no mesmo flush
-        # do ``on_change`` destrói o select em pleno evento e o dropdown "volta"
-        # (a troca se perde). O handler é async (roda como background task no
-        # NiceGUI) e o respiro solta o evento do select antes de recriar o painel.
-        self._refresh("toolbar", "canvas", "sob", "rodape", "drawer", "painel_extra")
-        await asyncio.sleep(0.05)
-        self._refresh("painel_topo")
+        self.refresh_estrutura()
 
     # -------- parâmetros do fluxo ------------------------------------------
     def set_tol(self, v):
