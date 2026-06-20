@@ -98,6 +98,27 @@ class Projeto:
         self.resultado_fluxo = None
         self.resultado_curto = None
 
+    def alterar_sbase(self, novo: float) -> None:
+        """Troca a Sbase **preservando as potências físicas** (MW/Mvar).
+
+        P/Q são guardados em pu na base do sistema; trocar a base sem reescalar
+        mudaria silenciosamente os MW de cada barra. Reescala P/Q pelo fator
+        ``base_antiga / base_nova`` para que os valores em MW não se alterem.
+        Ignora valores não-positivos (o núcleo exige Sbase > 0).
+        """
+        novo = float(novo)
+        if novo <= 0:
+            return
+        antiga = float(self.params_fluxo.get("Sbase", 100.0))
+        fator = antiga / novo
+        if fator != 1.0:
+            for b in self.barras:
+                b["P"] = b.get("P", 0.0) * fator
+                b["Q"] = b.get("Q", 0.0) * fator
+        self.params_fluxo["Sbase"] = novo
+        self.resultado_fluxo = None
+        self.resultado_curto = None
+
     # ------------------------------------------------------------------ resumo
     def estado_itens(self) -> list[dict]:
         """Itens do painel 'estado do projeto' — 5 itens, espelha o modelo.

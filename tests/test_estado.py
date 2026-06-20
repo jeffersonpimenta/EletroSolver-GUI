@@ -47,3 +47,24 @@ def test_definir_sistema_reseta_resultado():
 def test_params_padrao_default():
     p = Projeto.from_dict({})
     assert p.params_fluxo == PARAMS_PADRAO
+
+
+def test_alterar_sbase_preserva_mw():
+    p = Projeto.exemplo()  # caso d3: Sbase 100, carga P=-0.55 pu => -55 MW
+    sb0 = p.params_fluxo["Sbase"]
+    mw_antes = [b["P"] * sb0 for b in p.barras]
+    mvar_antes = [b["Q"] * sb0 for b in p.barras]
+    p.alterar_sbase(200.0)
+    assert p.params_fluxo["Sbase"] == 200.0
+    assert all(abs(b["P"] * 200.0 - mw) < 1e-9
+               for b, mw in zip(p.barras, mw_antes, strict=True))
+    assert all(abs(b["Q"] * 200.0 - mvar) < 1e-9
+               for b, mvar in zip(p.barras, mvar_antes, strict=True))
+
+
+def test_alterar_sbase_ignora_nao_positivo():
+    p = Projeto.exemplo()
+    pu_antes = [b["P"] for b in p.barras]
+    p.alterar_sbase(0.0)
+    assert p.params_fluxo["Sbase"] == 100.0  # inalterado
+    assert [b["P"] for b in p.barras] == pu_antes

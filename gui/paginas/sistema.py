@@ -190,10 +190,14 @@ def _tab_barras(res, sb) -> str:
 def _tab_ramos(res, sb) -> str:
     linhas = []
     for r in res["ramos"]:
+        par = r.get("n_paralelos", 1)
+        marca = (f' <span style="font-size:10px;color:{ROXO};font-weight:600" '
+                 f'title="{par} ramos paralelos — trânsito somado">∥{par}</span>'
+                 if par > 1 else "")
         linhas.append(
             f'<tr style="border-bottom:1px solid #f0f1f4">'
             f'<td style="{TD_L}"><span style="font-family:\'IBM Plex Sans\';font-weight:600">'
-            f'{r["de"]} → {r["para"]}</span></td>'
+            f'{r["de"]} → {r["para"]}{marca}</span></td>'
             f'<td style="{TD_R}">{fmt(r["P_ij"] * sb, 1)}</td>'
             f'<td style="{TD_R}">{fmt(r["Q_ij"] * sb, 1)}</td>'
             f'<td style="{TD_R}">{fmt(r["S_ij"] * sb, 1)}</td>'

@@ -72,6 +72,28 @@ def test_rodar_curto_barra_inexistente():
     assert res.get("erro")
 
 
+def test_rodar_fluxo_ramos_paralelos_agregados():
+    # Dois ramos em paralelo entre as mesmas barras: o relatório deve trazer UMA
+    # linha por par (trânsito somado pelo núcleo), sem descartar o paralelo.
+    barras = [
+        {"id": 1, "nome": "Slack", "tipo": 3, "V": 1.05, "theta": 0.0,
+         "P": 0.0, "Q": 0.0, "kv": 138.0},
+        {"id": 2, "nome": "Carga", "tipo": 1, "V": 1.0, "theta": 0.0,
+         "P": -0.5, "Q": -0.2, "kv": 138.0},
+    ]
+    ramos = [
+        {"id": 1, "de": 1, "para": 2, "r": 0.02, "x": 0.06, "b": 0.0, "tap": 1.0},
+        {"id": 2, "de": 1, "para": 2, "r": 0.02, "x": 0.06, "b": 0.0, "tap": 1.0},
+    ]
+    res = solver.rodar_fluxo(barras, ramos, {"tolerancia": 1e-8, "max_iter": 50, "Sbase": 100})
+    assert res["convergiu"] is True
+    assert len(res["ramos"]) == 1
+    linha = res["ramos"][0]
+    assert linha["n_paralelos"] == 2
+    assert set(linha["ids"]) == {1, 2}
+    assert linha["P_loss"] >= 0
+
+
 def test_exportar_sistema_estrutura():
     barras, ramos, params = _sistema()
     d = solver.exportar_sistema(barras, ramos, params)

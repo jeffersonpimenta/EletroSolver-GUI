@@ -303,7 +303,9 @@ class Workspace:
         self._param_alterado()
 
     def set_sbase(self, v):
-        self.proj.params_fluxo["Sbase"] = para_float(v, 100.0) or 100.0
+        # Reescala P/Q (pu) para preservar os MW ao trocar a base. _param_alterado
+        # limpa resultados e re-renderiza; os campos P/Q em MW não mudam de valor.
+        self.proj.alterar_sbase(para_float(v, 100.0) or 100.0)
         self._param_alterado()
 
     def _param_alterado(self):

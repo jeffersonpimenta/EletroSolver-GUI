@@ -134,24 +134,36 @@ def rodar_fluxo(barras: list[dict], ramos: list[dict], params: dict) -> dict:
             "Q": float(b.Q),
         })
 
-    ramos_res = []
-    vistos = set()
+    # Agrupa ramos por par de barras (não-ordenado). O ``transito`` do núcleo já
+    # soma os ramos paralelos entre o par, então emite-se UMA linha por par —
+    # somada e exata — registrando os ids de todos os paralelos (``ids`` /
+    # ``n_paralelos``) em vez de descartá-los silenciosamente.
+    grupos: dict[tuple[int, int], dict] = {}
     for r in ramos:
         if r["de"] not in idpos or r["para"] not in idpos:
             continue
         de, para = idpos[r["de"]], idpos[r["para"]]
         chave = (min(de, para), max(de, para))
-        if chave in vistos:
-            continue
-        vistos.add(chave)
+        g = grupos.get(chave)
+        if g is None:
+            grupos[chave] = {"de": de, "para": para,
+                             "de_id": r["de"], "para_id": r["para"],
+                             "ids": [r.get("id")]}
+        else:
+            g["ids"].append(r.get("id"))
+
+    ramos_res = []
+    for g in grupos.values():
         try:
-            t = sp.transito(de, para)
-            perdas = sp.losses(de, para)
+            t = sp.transito(g["de"], g["para"])
+            perdas = sp.losses(g["de"], g["para"])
         except (ValueError, ZeroDivisionError):
             continue
         ramos_res.append({
-            "id": r.get("id"),
-            "de": r["de"], "para": r["para"],
+            "id": g["ids"][0],
+            "ids": g["ids"],
+            "n_paralelos": len(g["ids"]),
+            "de": g["de_id"], "para": g["para_id"],
             "P_ij": float(t["P_ij"]), "Q_ij": float(t["Q_ij"]),
             "S_ij": float(abs(t["S_ij"])),
             "P_loss": float(perdas["P_loss"]), "Q_loss": float(perdas["Q_loss"]),
