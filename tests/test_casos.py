@@ -1,13 +1,20 @@
 import pytest
 
 from gui import casos
+from gui import diagrama as dg
 
-_ESPERADO = {"d3": (3, 3), "d5": (5, 7), "ieee9": (9, 9), "ieee14": (14, 20)}
+_ESPERADO = {"r3": (3, 2), "d3": (3, 3), "d5": (5, 7), "ieee9": (9, 9), "ieee14": (14, 20)}
 
 
-def test_lista_casos_quatro():
+def test_lista_casos_chaves():
     chaves = {c["chave"] for c in casos.lista_casos()}
-    assert chaves == {"d3", "d5", "ieee9", "ieee14"}
+    assert chaves == {"r3", "d3", "d5", "ieee9", "ieee14"}
+
+
+def test_casos_sem_aviso_niveis():
+    for c in casos.lista_casos():
+        barras, ramos, _ = casos.carregar(c["chave"])
+        assert not any(ch.get("warn") for ch in dg.validar(barras, ramos)), c["chave"]
 
 
 @pytest.mark.parametrize("chave,nb_nr", _ESPERADO.items())

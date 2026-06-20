@@ -30,6 +30,20 @@ def _r(rid, de, para, r, x, b, tap, ligacao, r0, x0, b0):
             "ligacao": ligacao, "r0": r0, "x0": x0, "b0": b0}
 
 
+def _radial3():
+    """Radial mínimo: slack → barra de passagem → carga. Tudo em 138 kV."""
+    barras = [
+        _b(1, "Slack", 3, 1.02, 0.0, 0.0, 160, 220, kv=138, xd=0.10, xd0=0.06),
+        _b(2, "Barra 2", 1, 1.00, 0.0, 0.0, 420, 220, kv=138),
+        _b(3, "Carga", 1, 1.00, -0.50, -0.20, 680, 220, kv=138),
+    ]
+    ramos = [
+        _r(1, 1, 2, 0.03, 0.09, 0.02, 1, "linha", 0.09, 0.27, 0.01),
+        _r(2, 2, 3, 0.04, 0.12, 0.02, 1, "linha", 0.12, 0.36, 0.01),
+    ]
+    return barras, ramos, dict(PARAMS)
+
+
 def _caso3():
     barras = [
         _b(1, "Slack", 3, 1.05, 0.0, 0.0, 180, 110, kv=13.8, xd=0.10, xd0=0.06),
@@ -38,7 +52,7 @@ def _caso3():
     ]
     ramos = [
         _r(1, 1, 2, 0.03, 0.10, 0.0, 1, "Dyn", 0.03, 0.10, 0.0),
-        _r(2, 1, 3, 0.05, 0.16, 0.03, 1, "linha", 0.15, 0.48, 0.02),
+        _r(2, 1, 3, 0.05, 0.16, 0.0, 1, "Dyn", 0.05, 0.16, 0.0),
         _r(3, 2, 3, 0.04, 0.12, 0.03, 1, "linha", 0.12, 0.36, 0.02),
     ]
     return barras, ramos, dict(PARAMS)
@@ -54,7 +68,7 @@ def _caso5():
     ]
     ramos = [
         _r(1, 1, 2, 0.02, 0.06, 0.0, 1, "Dyn", 0.02, 0.06, 0.0),
-        _r(2, 1, 3, 0.08, 0.24, 0.05, 1, "linha", 0.24, 0.72, 0.03),
+        _r(2, 1, 3, 0.08, 0.24, 0.0, 1, "Dyn", 0.08, 0.24, 0.0),
         _r(3, 2, 3, 0.06, 0.18, 0.04, 1, "linha", 0.18, 0.54, 0.02),
         _r(4, 2, 4, 0.06, 0.18, 0.04, 1, "linha", 0.18, 0.54, 0.02),
         _r(5, 2, 5, 0.04, 0.12, 0.03, 1, "linha", 0.12, 0.36, 0.02),
@@ -136,6 +150,12 @@ def _ieee14():
 
 # (chave, construtor, metadados da galeria)
 _CASOS = {
+    "r3": (_radial3, {
+        "nome": "Sistema introdutório", "sub": "3 barras · radial", "nb": 3, "nr": 2,
+        "kv": "138 kV", "tag": "Didático",
+        "desc": "Slack alimentando uma carga por uma barra de passagem, tudo em "
+                "138 kV. O fluxo de potência mais simples — ideal para o primeiro "
+                "contato."}),
     "d3": (_caso3, {
         "nome": "Sistema didático", "sub": "3 barras", "nb": 3, "nr": 3,
         "kv": "13,8 / 138 kV", "tag": "Didático",
