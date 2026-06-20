@@ -38,6 +38,14 @@ def _z_ramo(ramo: dict) -> complex:
     return complex(float(ramo.get("r", 0.0)), float(ramo.get("x", 0.0)))
 
 
+def _estampar_serie(Y, i, j, ys: complex, tap: float, bc: complex = 0.0) -> None:
+    """Estampa um ramo série π com tap (convenção MATPOWER, defasagem nula)."""
+    Y[i, i] += (ys + bc) / (tap * tap)
+    Y[j, j] += ys + bc
+    Y[i, j] += -ys / tap
+    Y[j, i] += -ys / tap
+
+
 def montar_ybus(barras: list[dict], ramos: list[dict]) -> list[list[complex]]:
     """Estampa a Ybus (modelo π com tap, convenção MATPOWER).
 
@@ -54,10 +62,82 @@ def montar_ybus(barras: list[dict], ramos: list[dict]) -> list[list[complex]]:
         ys = 1.0 / _z_ramo(r)
         tap = float(r.get("tap", 1.0)) or 1.0
         bc = 1j * float(r.get("b", 0.0)) / 2.0
-        Y[i, i] += (ys + bc) / (tap * tap)
-        Y[j, j] += ys + bc
-        Y[i, j] += -ys / tap
-        Y[j, i] += -ys / tap
+        _estampar_serie(Y, i, j, ys, tap, bc)
+    return Y.tolist()
+
+
+# Roteamento da sequência zero por ligação (espelha ``Faltas._LIGACOES_*``).
+_LIG_PASSANTES = ("linha", "YNyn")          # conduzem a seq. zero (série z₀)
+_LIG_ATERRAM_DE = ("YNd",)                  # aterram só o lado 'de'
+_LIG_ATERRAM_PARA = ("Dyn",)                # aterram só o lado 'para'
+_LIG_BLOQUEIO = ("Dd", "Yy", "Yyn", "YNy")  # bloqueiam a seq. zero
+
+
+def _z0_ramo(ramo: dict) -> complex:
+    """z₀ do ramo: usa r₀/x₀ se presentes, senão ``3·z₁`` (igual a rodar_curto)."""
+    if "r0" in ramo or "x0" in ramo:
+        return complex(float(ramo.get("r0", 0.0)), float(ramo.get("x0", 0.0)))
+    return 3.0 * _z_ramo(ramo)
+
+
+def montar_ybus0(barras: list[dict], ramos: list[dict]) -> list[list[complex]]:
+    """Estampa a Ybus de sequência zero, roteada pelo tipo de ligação dos ramos.
+
+    Espelha o roteamento de ``Faltas._montar_y0`` (mesmas constantes
+    ``_LIGACOES_*``), porém **rede pura** (sem geradores), para acompanhar a
+    montagem ao vivo: ``linha``/``YNyn`` conduzem (série z₀/b₀); ``YNd``/``Dyn``
+    aterram um lado (shunt 1/z₀); ``Dd``/``Yy``/``Yyn``/``YNy`` bloqueiam.
+    """
+    ordenadas, idpos = _ordenar(barras)
+    n = len(ordenadas)
+    Y = np.zeros((n, n), dtype=complex)
+    for r in ramos:
+        if r["de"] not in idpos or r["para"] not in idpos:
+            continue
+        i, j = idpos[r["de"]] - 1, idpos[r["para"]] - 1
+        lig = r.get("ligacao", "linha")
+        if lig in _LIG_PASSANTES:
+            tap = float(r.get("tap", 1.0)) or 1.0
+            bc = 1j * float(r.get("b0", 0.0)) / 2.0
+            _estampar_serie(Y, i, j, 1.0 / _z0_ramo(r), tap, bc)
+        elif lig in _LIG_ATERRAM_DE:
+            Y[i, i] += 1.0 / _z0_ramo(r)
+        elif lig in _LIG_ATERRAM_PARA:
+            Y[j, j] += 1.0 / _z0_ramo(r)
+        # _LIG_BLOQUEIO ou desconhecida: não conduz a seq. zero.
+    return Y.tolist()
+
+
+def montar_ybus1_falta(barras: list[dict], ramos: list[dict]) -> list[list[complex]]:
+    """Ybus de seq. positiva da **rede de falta** = Ybus do fluxo + fontes.
+
+    Difere da do fluxo só pela reatância subtransitória das fontes: cada barra
+    Slack/PV soma ``1/(j·X″d)`` na diagonal (espelha ``Faltas._montar_y_seq``,
+    com R₁=0 e X₁ = ``xd`` ou 0.10, como em :func:`rodar_curto`). A Zbus do curto
+    é a inversa desta matriz.
+    """
+    ordenadas, idpos = _ordenar(barras)
+    Y = np.asarray(montar_ybus(barras, ramos), dtype=complex)
+    for b in ordenadas:
+        if int(b.get("tipo", 1)) in (2, 3):
+            k = idpos[b["id"]] - 1
+            Y[k, k] += 1.0 / complex(0.0, float(b.get("xd") or 0.10))
+    return Y.tolist()
+
+
+def montar_ybus0_falta(barras: list[dict], ramos: list[dict]) -> list[list[complex]]:
+    """Ybus de seq. zero da **rede de falta** = :func:`montar_ybus0` + fontes.
+
+    Cada barra Slack/PV (aterrada) soma ``1/(j·X₀)`` na diagonal (espelha
+    ``Faltas._montar_y0``, com R₀=0, Zₙ=0 e X₀ = ``xd0`` ou 0.06, como em
+    :func:`rodar_curto`). A Z₀bus do curto é a inversa desta matriz.
+    """
+    ordenadas, idpos = _ordenar(barras)
+    Y = np.asarray(montar_ybus0(barras, ramos), dtype=complex)
+    for b in ordenadas:
+        if int(b.get("tipo", 1)) in (2, 3):
+            k = idpos[b["id"]] - 1
+            Y[k, k] += 1.0 / complex(0.0, float(b.get("xd0") or 0.06))
     return Y.tolist()
 
 

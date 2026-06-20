@@ -30,7 +30,6 @@ def main() -> None:
         or os.environ.get("ELETROGUI_SECRET", "eletrosolver-dev-secret"),
         reload=False,
         show=not headless,
-        favicon="⚡",
         dark=False,
     )
 

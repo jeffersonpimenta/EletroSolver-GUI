@@ -59,11 +59,11 @@ _NAV = [
     ("sistema", "Sistema",
      '<circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/>'
      '<circle cx="12" cy="18" r="2.4"/><path d="M7.6 7.4 11 15.8M16.4 7.4 13 15.8M8 6h8"/>',
-     "DIAGRAMA", "espaco", "nav_editar"),
+     "", "espaco", "nav_editar"),
     ("fluxo", "Fluxo de potência", '<path d="M4 14h4l3-8 4 16 2-8h3"/>',
      "", "analise", "nav_fluxo"),
     ("curto", "Curto-circuito", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
-     "FASE 3", "analise", "nav_curto"),
+     "", "analise", "nav_curto"),
 ]
 
 

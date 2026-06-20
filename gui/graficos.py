@@ -147,3 +147,57 @@ def matriz_zbus_svg(curto, seq: str = "pos") -> str:
             '<table style="border-collapse:collapse;width:100%">'
             f'<thead><tr>{"".join(head)}</tr></thead>'
             f'<tbody>{"".join(rows)}</tbody></table></div>')
+
+
+def matriz_ybus_svg(barras, ramos, seq: str = "pos", estudo: str = "fluxo") -> str:
+    """Tabela da matriz Ybus de barra, diagonal destacada, construída ao vivo.
+
+    ``estudo='fluxo'`` → Ybus da rede (seq. positiva, sem fontes). ``'falta'`` →
+    rede + reatância das fontes, na sequência ``seq`` ('pos'/'zero'). Espelha
+    :func:`matriz_zbus_svg`, mas sem inverter (não falha em rede incompleta).
+    """
+    if not barras:
+        return ""
+    from gui.solver import (  # import tardio: não acopla graficos ao núcleo
+        montar_ybus,
+        montar_ybus0_falta,
+        montar_ybus1_falta,
+    )
+
+    ordenadas = sorted(barras, key=lambda b: b["id"])
+    try:
+        if estudo == "falta":
+            M = montar_ybus0_falta(barras, ramos) if seq == "zero" else montar_ybus1_falta(barras, ramos)
+        else:
+            M = montar_ybus(barras, ramos)  # fluxo: rede de seq. positiva
+    except ZeroDivisionError:
+        return ('<div style="font-size:12.5px;color:#9aa3b8;padding:14px 2px">'
+                'Há ramo com z = 0 — defina r/x para ver a matriz Ybus.</div>')
+    accent = "#7c5cd6" if (estudo == "falta" and seq == "zero") else "#2b6cf0"
+
+    def fmty(c):
+        sg = "+j" if c.imag >= 0 else "−j"
+        return f"{fmt(c.real, 3)}{sg}{fmt(abs(c.imag), 3)}"
+
+    head = ['<td style="padding:5px 8px;border-bottom:1px solid #e6e8ec"></td>']
+    for b in ordenadas:
+        head.append(f'<td style="padding:5px 8px;text-align:right;font-family:{MONO};'
+                    f'font-size:11px;font-weight:700;color:#8a909c;'
+                    f'border-bottom:1px solid #e6e8ec">{b["id"]}</td>')
+    rows = []
+    for i, b in enumerate(ordenadas):
+        cells = [f'<td style="padding:5px 8px;font-family:{MONO};font-size:11px;font-weight:700;'
+                 f'color:#8a909c;border-bottom:1px solid #f0f1f4;border-right:1px solid #eef0f3;'
+                 f'position:sticky;left:0;background:#fff">{b["id"]}</td>']
+        for j in range(len(ordenadas)):
+            diag = i == j
+            color = accent if diag else "#374151"
+            weight = 700 if diag else 400
+            cells.append(f'<td style="padding:5px 8px;text-align:right;white-space:nowrap;'
+                         f'font-family:{MONO};font-size:11px;color:{color};font-weight:{weight};'
+                         f'border-bottom:1px solid #f0f1f4">{fmty(M[i][j])}</td>')
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    return ('<div style="overflow-x:auto;border:1px solid #eef0f3;border-radius:9px">'
+            '<table style="border-collapse:collapse;width:100%">'
+            f'<thead><tr>{"".join(head)}</tr></thead>'
+            f'<tbody>{"".join(rows)}</tbody></table></div>')

@@ -146,10 +146,69 @@ def toolbar(ws) -> None:
 def sob_canvas(ws) -> None:
     res = ws.proj.resultado_fluxo
     cu = ws.proj.resultado_curto
-    if ws.modo == "fluxo" and res and res.get("barras"):
+    if ws.modo == "editar":
+        _matriz_ybus(ws)
+    elif ws.modo == "fluxo" and res and res.get("barras"):
         _fluxo_tabelas(ws, res)
     elif ws.modo == "curto" and cu and not cu.get("erro"):
         _curto_detalhe(ws, cu)
+
+
+def _matriz_ybus(ws) -> None:
+    """Matriz de admitância de barra (Ybus) que evolui conforme se monta o sistema.
+
+    Seletor **Fluxo / Falta**: em *Fluxo* mostra a Ybus da rede (seq. positiva,
+    sem fontes — a matriz nodal do fluxo); em *Falta* mostra a rede + reatância
+    das fontes, com seletor de sequência **+/0** (a Zbus do curto é a inversa).
+    Atualiza ao vivo (vive na região ``sob``).
+    """
+    if not ws.proj.barras:
+        return
+    n = len(ws.proj.barras)
+    falta = ws.mat_estudo == "falta"
+    seq = ws.mat_seq if falta else "pos"
+    sub = "rede da falta (com fontes)" if falta else "rede do fluxo (sem fontes)"
+    with ui.element("div").style("margin-top:18px"):
+        with ui.element("div").style(CARD_BOX):
+            with ui.element("div").style("display:flex;align-items:center;justify-content:space-between;"
+                                         "gap:12px;margin-bottom:12px;flex-wrap:wrap"):
+                ui.html('<div><div style="font-weight:600;font-size:13.5px">'
+                        'Matriz de admitância de barra · Ybus</div>'
+                        f'<div style="font-size:12px;color:#8a909c;margin-top:2px">{n}×{n} · '
+                        f'em pu na base {fmt(ws.sbase, 0)} MVA · {sub}</div></div>')
+                with ui.element("div").style("display:flex;flex-direction:column;gap:6px;width:220px"):
+                    with ui.element("div").style("display:flex;gap:6px"):
+                        _seg_estudo(ws, "fluxo", "Fluxo", ACCENT)
+                        _seg_estudo(ws, "falta", "Falta", ROXO)
+                    if falta:
+                        with ui.element("div").style("display:flex;gap:6px"):
+                            _seg_mat(ws, "pos", "Seq +", ACCENT)
+                            _seg_mat(ws, "zero", "Seq 0", ROXO)
+            ui.html(graficos.matriz_ybus_svg(ws.proj.barras, ws.proj.ramos, seq, ws.mat_estudo))
+            ui.html(f'<div style="{_NOTA}">{_nota_ybus(ws.mat_estudo, seq)}</div>')
+
+
+def _seg_estudo(ws, est, rotulo_btn, cor):
+    ativo = ws.mat_estudo == est
+    estilo = (f"flex:1;padding:6px 0;border-radius:7px;border:1px solid "
+              f"{cor if ativo else '#dde1e7'};background:{cor if ativo else '#fff'};"
+              f"color:{'#fff' if ativo else '#6b7280'};font-size:12px;font-weight:600;"
+              f"cursor:pointer;font-family:inherit")
+    botao_estilo(rotulo_btn, estilo, lambda est=est: ws.set_mat_estudo(est))
+
+
+def _nota_ybus(estudo, seq):
+    if estudo == "falta" and seq == "zero":
+        return ("Ybus de sequência zero da rede de falta: rede roteada pelas ligações dos trafos "
+                "(linha/YNyn conduzem; Dyn/YNd aterram um lado; Dd/Yy/Yyn/YNy bloqueiam) mais o "
+                "aterramento das fontes (1/(j·X₀)). A Z₀bus do curto é a inversa desta matriz.")
+    if estudo == "falta":
+        return ("Ybus de sequência positiva da rede de falta: rede π + a reatância subtransitória "
+                "das fontes (1/(j·X″d)) na diagonal das barras Slack/PV. A Zbus do curto é a "
+                "inversa desta matriz.")
+    return ("Ybus de sequência positiva da rede de fluxo (Y₁ = estampagem π com tap), sem fontes "
+            "— os geradores entram como injeção P/V, não na matriz. É a matriz nodal que alimenta "
+            "o fluxo de potência.")
 
 
 def _fluxo_tabelas(ws, res) -> None:

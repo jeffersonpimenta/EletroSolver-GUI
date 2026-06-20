@@ -78,6 +78,7 @@ class Workspace:
         self.c_tipo = "tri"
         self.c_zf = 0.0
         self.mat_seq = "pos"
+        self.mat_estudo = "fluxo"
         self._novo = not proj.barras
         self._dialogo_galeria = None
         # handles das regiões refreshable
@@ -333,6 +334,10 @@ class Workspace:
         self.mat_seq = s
         self._refresh("sob")
 
+    def set_mat_estudo(self, e) -> None:
+        self.mat_estudo = e
+        self._refresh("sob")
+
     # ----------------------------------------------------------- cálculos
     async def calcular_fluxo(self) -> None:
         if not diagrama.eh_valido(self.proj.barras, self.proj.ramos):
@@ -490,12 +495,11 @@ class Workspace:
         # via run_javascript: <script> em innerHTML não executa.
         ui.run_javascript(_CANVAS_JS)
 
-        # abertura idêntica ao .html: aba nova → 5 barras, modo Curto, falta na barra 3
+        # abertura: aba nova → carrega 5 barras e fica na página Início
         if self._novo:
             barras, ramos, params = casos.carregar("d5")
             self.proj.definir_sistema(barras, ramos, params, nome=casos.nome_caso("d5"))
             self.c_barra = 3
-            self.page, self.modo = "sistema", "curto"
             self._persistir()
             self.refresh_pagina()
             await self.calcular_curto()

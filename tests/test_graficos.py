@@ -37,3 +37,12 @@ def test_matriz_zbus_svg():
     zero = graficos.matriz_zbus_svg(cu, "zero")
     assert "<table" in pos and "<table" in zero
     assert graficos.matriz_zbus_svg(None) == ""
+
+
+def test_matriz_ybus_svg():
+    barras, ramos, _ = casos.carregar("d3")
+    fluxo = graficos.matriz_ybus_svg(barras, ramos, "pos", "fluxo")
+    falta1 = graficos.matriz_ybus_svg(barras, ramos, "pos", "falta")
+    falta0 = graficos.matriz_ybus_svg(barras, ramos, "zero", "falta")
+    assert "<table" in fluxo and "<table" in falta1 and "<table" in falta0
+    assert graficos.matriz_ybus_svg([], []) == ""
